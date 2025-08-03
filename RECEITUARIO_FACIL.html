@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receituário Médico Digital</title>
+    <!-- jsPDF library from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .form-container {
+            padding: 40px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 1.1rem;
+        }
+        
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e6ed;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+        
+        input[type="text"]:focus, textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        
+        .medication-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 25px 0;
+            border-left: 4px solid #3498db;
+        }
+        
+        .medication-item {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #e0e6ed;
+            position: relative;
+        }
+        
+        .medication-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .remove-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .remove-btn:hover {
+            background: #c0392b;
+            transform: scale(1.1);
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px 5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(39, 174, 96, 0.3);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(149, 165, 166, 0.3);
+        }
+        
+        .btn-orange {
+            background: linear-gradient(135deg, #e67e22, #d35400);
+            color: white;
+        }
+        
+        .btn-orange:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(230, 126, 34, 0.3);
+        }
+        
+        .actions {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 2px solid #ecf0f1;
+            margin-top: 30px;
+        }
+        
+        .preview-section {
+            background: #f8f9fa;
+            padding: 30px;
+            margin-top: 30px;
+            border-radius: 10px;
+            border: 2px dashed #bdc3c7;
+            display: none;
+        }
+        
+        .preview-content {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            font-family: 'Times New Roman', serif;
+            line-height: 1.6;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .doctor-info-section {
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 20px 40px;
+            border-radius: 10px;
+            border-left: 4px solid #27ae60;
+        }
+        
+        .doctor-info-section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        
+        .doctor-logo-display {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px auto;
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        .doctor-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            text-align: center;
+        }
+        
+        .patient-info {
+            margin-bottom: 30px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .medications-list {
+            margin-bottom: 40px;
+        }
+        
+        .medication-prescription {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-left: 3px solid #3498db;
+            background: #f8f9fa;
+        }
+        
+        .prescription-footer {
+            text-align: right;
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #bdc3c7;
+        }
+        
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 6rem;
+            color: rgba(52, 152, 219, 0.05);
+            font-weight: bold;
+            z-index: -1;
+            pointer-events: none;
+            user-select: none;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+            }
+            
+            .form-container {
+                padding: 20px;
+            }
+            
+            .doctor-info-section {
+                margin: 20px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .btn {
+                width: 100%;
+                margin: 5px 0;
+                justify-content: center;
+            }
+            
+            .doctor-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Marca d'água -->
+    <div class="watermark">RECEITUÁRIO MÉDICO</div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>📋 Receituário Médico</h1>
+            <p>Sistema Digital de Prescrição Médica</p>
+        </div>
+        
+        <!-- Informações do Médico -->
+        <div class="doctor-info-section">
+            <h3>👨‍⚕️ Informações do Médico</h3>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div class="doctor-logo-display">
+                    LOGO
+                </div>
+                <p style="font-size: 1.1em; color: #2c3e50; margin-bottom: 5px; font-weight: bold;">Clínica Médica</p>
+            </div>
+            <div class="doctor-grid">
+                <div>
+                    <p><strong>Dr. João Silva Santos</strong></p>
+                    <p>CRM: 12345-SP</p>
+                </div>
+                <div>
+                    <p>Especialidade: Clínica Geral</p>
+                    <p>Telefone: (11) 99999-9999</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-container">
+            <form id="prescriptionForm">
+                <div class="form-group">
+                    <label for="patientName">👤 Nome do Paciente:</label>
+                    <input type="text" id="patientName" name="patientName" required placeholder="Digite o nome completo do paciente">
+                </div>
+                
+                <div class="medication-section">
+                    <h3 style="color: #2c3e50; margin-bottom: 20px;">💊 Medicamentos Prescritos</h3>
+                    <div id="medicationsContainer">
+                        <div class="medication-item">
+                            <label>Medicamento:</label>
+                            <input type="text" class="medication-input" placeholder="Nome do medicamento, dosagem e instruções de uso" required>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="addMedication()">
+                        ➕ Adicionar Medicamento
+                    </button>
+                </div>
+                
+                <div class="form-group">
+                    <label for="observations">📝 Observações Adicionais:</label>
+                    <textarea id="observations" name="observations" rows="4" placeholder="Observações gerais, recomendações especiais, etc."></textarea>
+                </div>
+            </form>
+            
+            <div class="actions">
+                <button type="button" class="btn btn-secondary" onclick="previewPrescription()">
+                    👁️ Visualizar Receita
+                </button>
+                <button type="button" class="btn btn-success" onclick="generatePDF()">
+                    📄 Gerar PDF
+                </button>
+                <button type="button" class="btn btn-orange" onclick="downloadPDF()">
+                    💾 Baixar PDF
+                </button>
+                <button type="button" class="btn btn-primary" onclick="clearForm()">
+                    🔄 Limpar Formulário
+                </button>
+            </div>
+            
+            <div id="previewSection" class="preview-section">
+                <h3 style="color: #2c3e50; margin-bottom: 20px;">📋 Pré-visualização da Receita</h3>
+                <div id="previewContent" class="preview-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let medicationCount = 1;
+        
+        // Informações do médico (editáveis)
+        const DOCTOR_INFO = {
+            name: "Dr. João Silva Santos",
+            crm: "12345-SP",
+            specialty: "Clínica Geral",
+            phone: "(11) 99999-9999",
+            clinic: "Clínica Médica"
+        };
+
+        function addMedication() {
+            medicationCount++;
+            const container = document.getElementById('medicationsContainer');
+            const medicationDiv = document.createElement('div');
+            medicationDiv.className = 'medication-item';
+            medicationDiv.innerHTML = `
+                <button type="button" class="remove-btn" onclick="removeMedication(this)" title="Remover medicamento">×</button>
+                <label>Medicamento:</label>
+                <input type="text" class="medication-input" placeholder="Nome do medicamento, dosagem e instruções de uso" required>
+            `;
+            container.appendChild(medicationDiv);
+            
+            // Focar no novo campo
+            const newInput = medicationDiv.querySelector('.medication-input');
+            newInput.focus();
+        }
+
+        function removeMedication(button) {
+            const medicationItem = button.parentElement;
+            const container = document.getElementById('medicationsContainer');
+            
+            if (container.children.length > 1) {
+                medicationItem.remove();
+                medicationCount--;
+            } else {
+                alert('É necessário manter pelo menos um medicamento na receita.');
+            }
+        }
+
+        function previewPrescription() {
+            const patientName = document.getElementById('patientName').value;
+            const observations = document.getElementById('observations').value;
+            
+            if (!patientName.trim()) {
+                alert('Por favor, preencha o nome do paciente.');
+                document.getElementById('patientName').focus();
+                return;
+            }
+            
+            const medicationInputs = document.querySelectorAll('.medication-input');
+            const medications = Array.from(medicationInputs)
+                .map(input => input.value.trim())
+                .filter(value => value !== '');
+            
+            if (medications.length === 0) {
+                alert('Por favor, adicione pelo menos um medicamento.');
+                document.querySelector('.medication-input').focus();
+                return;
+            }
+            
+            const currentDate = new Date().toLocaleDateString('pt-BR');
+            
+            let medicationsHTML = '';
+            medications.forEach((medication, index) => {
+                medicationsHTML += `
+                    <div class="medication-prescription">
+                        <strong>${index + 1}.</strong> ${medication}
+                    </div>
+                `;
+            });
+            
+            const previewHTML = `
+                <div style="text-align: center; border-bottom: 2px solid #2c3e50; padding-bottom: 20px; margin-bottom: 30px;">
+                    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #3498db, #2980b9); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto; color: white; font-size: 24px; font-weight: bold;">
+                        LOGO
+                    </div>
+                    <h2 style="margin: 0; color: #2c3e50;">RECEITUÁRIO MÉDICO</h2>
+                    <p style="margin: 5px 0; color: #7f8c8d;">${DOCTOR_INFO.clinic}</p>
+                    <p style="margin: 10px 0; font-size: 0.9rem;">Data: ${currentDate}</p>
+                    <div style="margin-top: 15px; font-size: 0.9rem; color: #2c3e50;">
+                        <p><strong>${DOCTOR_INFO.name}</strong> - CRM: ${DOCTOR_INFO.crm}</p>
+                        <p>${DOCTOR_INFO.specialty} - ${DOCTOR_INFO.phone}</p>
+                    </div>
+                </div>
+                
+                <div class="patient-info">
+                    <strong>Paciente:</strong> ${patientName}
+                </div>
+                
+                <div class="medications-list">
+                    <h3 style="color: #2c3e50; margin-bottom: 15px;">Medicamentos Prescritos:</h3>
+                    ${medicationsHTML}
+                </div>
+                
+                ${observations ? `
+                    <div style="margin-bottom: 30px;">
+                        <h4 style="color: #2c3e50;">Observações:</h4>
+                        <p style="margin-top: 10px; padding: 15px; background: #f8f9fa; border-radius: 5px;">${observations}</p>
+                    </div>
+                ` : ''}
+                
+                <div class="prescription-footer">
+                    <p><strong>${DOCTOR_INFO.name}</strong></p>
+                    <p>CRM: ${DOCTOR_INFO.crm}</p>
+                    <p style="margin-top: 10px; font-size: 0.9em;">Assinatura e Carimbo</p>
+                </div>
+            `;
+            
+            document.getElementById('previewContent').innerHTML = previewHTML;
+            document.getElementById('previewSection').style.display = 'block';
+            
+            // Scroll suave para a pré-visualização
+            document.getElementById('previewSection').scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+
+        function generatePDF() {
+            const patientName = document.getElementById('patientName').value;
+            
+            if (!patientName.trim()) {
+                alert('Por favor, preencha o nome do paciente.');
+                document.getElementById('patientName').focus();
+                return;
+            }
+            
+            const medicationInputs = document.querySelectorAll('.medication-input');
+            const medications = Array.from(medicationInputs)
+                .map(input => input.value.trim())
+                .filter(value => value !== '');
+            
+            if (medications.length === 0) {
+                alert('Por favor, adicione pelo menos um medicamento.');
+                document.querySelector('.medication-input').focus();
+                return;
+            }
+            
+            // Gerar a pré-visualização primeiro
+            previewPrescription();
+            
+            // Aguardar um momento para o conteúdo ser renderizado
+            setTimeout(() => {
+                // Abrir janela de impressão
+                const printContent = generatePrintableContent();
+                const printWindow = window.open('', '_blank', 'width=800,height=600');
+                
+                if (printWindow) {
+                    printWindow.document.write(printContent);
+                    printWindow.document.close();
+                    printWindow.focus();
+                    
+                    // Aguardar carregamento e abrir diálogo de impressão
+                    printWindow.onload = function() {
+                        setTimeout(() => {
+                            printWindow.print();
+                        }, 500);
+                    };
+                } else {
+                    alert('Pop-up bloqueado! Por favor, permita pop-ups e tente novamente.');
+                }
+            }, 500);
+        }
+
+        function generatePrintableContent() {
+            const patientName = document.getElementById('patientName').value;
+            const observations = document.getElementById('observations').value;
+            const currentDate = new Date().toLocaleDateString('pt-BR');
+            
+            const medicationInputs = document.querySelectorAll('.medication-input');
+            const medications = Array.from(medicationInputs)
+                .map(input => input.value.trim())
+                .filter(value => value !== '');
+            
+            let medicationsHTML = '';
+            medications.forEach((medication, index) => {
+                medicationsHTML += `<div style="margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-left: 3px solid #3498db;">${index + 1}. ${medication}</div>`;
+            });
+            
+            const obsHTML = observations ? `
+                <div style="margin: 20px 0;">
+                    <h4 style="color: #2c3e50; margin-bottom: 10px;">Observações:</h4>
+                    <div style="padding: 15px; background: #f8f9fa; border-radius: 5px;">
+                        ${observations}
+                    </div>
+                </div>
+            ` : '';
+            
+            return `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Receituário Médico - ${patientName}</title>
+                    <style>
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            line-height: 1.4; 
+                            margin: 20px;
+                            color: #000;
+                        }
+                        .header { 
+                            text-align: center; 
+                            border-bottom: 2px solid #000; 
+                            padding-bottom: 15px; 
+                            margin-bottom: 20px; 
+                        }
+                        .logo { 
+                            width: 60px; 
+                            height: 60px; 
+                            background: #3498db; 
+                            border-radius: 50%; 
+                            margin: 0 auto 10px; 
+                            display: flex; 
+                            align-items: center; 
+                            justify-content: center; 
+                            color: white; 
+                            font-weight: bold; 
+                        }
+                        .patient-info { 
+                            margin: 20px 0; 
+                            padding: 10px; 
+                            background: #f8f9fa; 
+                            border-radius: 5px; 
+                        }
+                        .signature { 
+                            text-align: right; 
+                            margin-top: 40px; 
+                            padding-top: 20px; 
+                            border-top: 1px solid #ccc; 
+                        }
+                        @media print {
+                            body { margin: 0; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <div class="logo">LOGO</div>
+                        <h2>RECEITUÁRIO MÉDICO</h2>
+                        <p>${DOCTOR_INFO.clinic}</p>
+                        <p>Data: ${currentDate}</p>
+                        <p style="font-size: 0.9em;">${DOCTOR_INFO.name} - CRM: ${DOCTOR_INFO.crm} - ${DOCTOR_INFO.specialty} - ${DOCTOR_INFO.phone}</p>
+                    </div>
+                    
+                    <div class="patient-info">
+                        <strong>Paciente:</strong> ${patientName}
+                    </div>
+                    
+                    <div>
+                        <h3 style="color: #2c3e50; margin-bottom: 15px;">Medicamentos Prescritos:</h3>
+                        ${medicationsHTML}
+                    </div>
+                    
+                    ${obsHTML}
+                    
+                    <div class="signature">
+                        <p><strong>${DOCTOR_INFO.name}</strong></p>
+                        <p>CRM: ${DOCTOR_INFO.crm}</p>
+                        <p style="margin-top: 15px; font-size: 0.9em;">Assinatura e Carimbo</p>
+                    </div>
+                </body>
+                </html>
+            `;
+        }
+
+        function downloadPDF() {
+            const patientName = document.getElementById('patientName').value;
+            const observations = document.getElementById('observations').value;
+            
+            if (!patientName.trim()) {
+                alert('Por favor, preencha o nome do paciente.');
+                document.getElementById('patientName').focus();
+                return;
+            }
+            
+            const medicationInputs = document.querySelectorAll('.medication-input');
+            const medications = Array.from(medicationInputs)
+                .map(input => input.value.trim())
+                .filter(value => value !== '');
+            
+            if (medications.length === 0) {
+                alert('Por favor, adicione pelo menos um medicamento.');
+                document.querySelector('.medication-input').focus();
+                return;
+            }
+
+            try {
+                // Criar novo documento PDF
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                const currentDate = new Date().toLocaleDateString('pt-BR');
+                
+                // Configurações básicas
+                const pageWidth = doc.internal.pageSize.width;
+                const pageHeight = doc.internal.pageSize.height;
+                const margin = 20;
+                let yPosition = 20;
+                
+                // Marca d'água
+                doc.setFontSize(40);
+                doc.setTextColor(240, 240, 240);
+                doc.text('RECEITUÁRIO MÉDICO', pageWidth/2, pageHeight/2, { 
+                    align: 'center',
+                    angle: 45
+                });
+                doc.setTextColor(0, 0, 0);
+                
+                // Logo simulado (círculo)
+                doc.setFillColor(52, 152, 219);
+                doc.circle(pageWidth/2, yPosition + 8, 8, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(10);
+                doc.text('LOGO', pageWidth/2, yPosition + 10, { align: 'center' });
+                
+                // Cabeçalho
+                yPosition += 20;
+                doc.setTextColor(0, 0, 0);
+                doc.setFontSize(16);
+                doc.text('RECEITUÁRIO MÉDICO', pageWidth/2, yPosition, { align: 'center' });
+                
+                yPosition += 8;
+                doc.setFontSize(12);
+                doc.text(DOCTOR_INFO.clinic, pageWidth/2, yPosition, { align: 'center' });
+                
+                yPosition += 6;
+                doc.setFontSize(10);
+                doc.text(`Data: ${currentDate}`, pageWidth/2, yPosition, { align: 'center' });
+                
+                // Informações do médico
+                yPosition += 10;
+                doc.setFontSize(9);
+                const doctorInfo = `${DOCTOR_INFO.name} - CRM: ${DOCTOR_INFO.crm} - ${DOCTOR_INFO.specialty}`;
+                doc.text(doctorInfo, pageWidth/2, yPosition, { align: 'center' });
+                
+                yPosition += 4;
+                doc.text(`Tel: ${DOCTOR_INFO.phone}`, pageWidth/2, yPosition, { align: 'center' });
+                
+                // Linha separadora
+                yPosition += 10;
+                doc.line(margin, yPosition, pageWidth - margin, yPosition);
+                
+                // Informações do paciente
+                yPosition += 15;
+                doc.setFontSize(12);
+                doc.text('Paciente:', margin, yPosition);
+                doc.text(patientName, margin + 25, yPosition);
+                
+                // Medicamentos
+                yPosition += 15;
+                doc.setFontSize(14);
+                doc.text('Medicamentos Prescritos:', margin, yPosition);
+                
+                yPosition += 10;
+                doc.setFontSize(11);
+                
+                medications.forEach((medication, index) => {
+                    yPosition += 8;
+                    
+                    // Verificar se há espaço na página
+                    if (yPosition > pageHeight - 60) {
+                        doc.addPage();
+                        yPosition = margin;
+                    }
+                    
+                    // Quebrar texto longo
+                    const medicationText = `${index + 1}. ${medication}`;
+                    const splitText = doc.splitTextToSize(medicationText, pageWidth - 2 * margin);
+                    
+                    doc.text(splitText, margin, yPosition);
+                    
+                    // Ajustar posição Y baseado no número de linhas
+                    if (splitText.length > 1) {
+                        yPosition += (splitText.length - 1) * 5;
+                    }
+                });
+                
+                // Observações
+                if (observations.trim()) {
+                    yPosition += 15;
+                    
+                    // Verificar se há espaço na página
+                    if (yPosition > pageHeight - 80) {
+                        doc.addPage();
+                        yPosition = margin;
+                    }
+                    
+                    doc.setFontSize(12);
+                    doc.text('Observações:', margin, yPosition);
+                    
+                    yPosition += 8;
+                    doc.setFontSize(10);
+                    const obsText = doc.splitTextToSize(observations, pageWidth - 2 * margin);
+                    doc.text(obsText, margin, yPosition);
+                    
+                    yPosition += obsText.length * 5;
+                }
+                
+                // Assinatura
+                const signatureY = Math.max(yPosition + 30, pageHeight - 40);
+                doc.setFontSize(12);
+                doc.text(DOCTOR_INFO.name, pageWidth - margin, signatureY, { align: 'right' });
+                doc.text(`CRM: ${DOCTOR_INFO.crm}`, pageWidth - margin, signatureY + 6, { align: 'right' });
+                
+                doc.setFontSize(10);
+                doc.text('Assinatura e Carimbo', pageWidth - margin, signatureY + 15, { align: 'right' });
+                
+                // Salvar PDF
+                const fileName = `Receituario_${patientName.replace(/\s+/g, '_')}_${currentDate.replace(/\//g, '-')}.pdf`;
+                doc.save(fileName);
+                
+                // Mostrar mensagem de sucesso
+                setTimeout(() => {
+                    alert(`✅ PDF gerado com sucesso!\n\nArquivo: ${fileName}\n\nO download foi iniciado automaticamente.`);
+                }, 500);
+                
+            } catch (error) {
+                console.error('Erro ao gerar PDF:', error);
+                alert('❌ Erro ao gerar PDF. Tente usar o botão "Gerar PDF" para imprimir.');
+            }
+        }
+
+        function clearForm() {
+            if (confirm('Tem certeza que deseja limpar todos os campos do formulário?')) {
+                document.getElementById('prescriptionForm').reset();
+                
+                const container = document.getElementById('medicationsContainer');
+                container.innerHTML = `
+                    <div class="medication-item">
+                        <label>Medicamento:</label>
+                        <input type="text" class="medication-input" placeholder="Nome do medicamento, dosagem e instruções de uso" required>
+                    </div>
+                `;
+                medicationCount = 1;
+                
+                document.getElementById('previewSection').style.display = 'none';
+                document.getElementById('patientName').focus();
+            }
+        }
+
+        // Adicionar medicamento com Enter
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.target.classList.contains('medication-input')) {
+                e.preventDefault();
+                if (e.target.value.trim()) {
+                    addMedication();
+                }
+            }
+        });
+
+        // Focar no primeiro campo ao carregar
+        window.addEventListener('load', function() {
+            document.getElementById('patientName').focus();
+        });
+    </script>
+</body>
+</html>
